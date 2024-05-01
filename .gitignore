@@ -2,3 +2,5 @@
 *.a
 ft_ls
 objs
+*.out
+ft_nm
