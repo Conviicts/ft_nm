@@ -12,7 +12,7 @@
 
 #include "ft_nm.h"
 
-void exit_clean(t_nm *nm, int status) {
+void	exit_clean(t_nm *nm, int status) {
 	while (nm->files) {
 		t_list *next = nm->files->next;
 		free(((t_file *)nm->files->content)->error);
@@ -25,7 +25,6 @@ void exit_clean(t_nm *nm, int status) {
 
 void	parser(t_nm *nm, int ac, char **av) {
 	t_file	*tmp;
-	t_stat	st;
 	int		fd;
 	for (int i = 1; i < ac; i++) {
 		if ((tmp = malloc(sizeof(t_file))) == NULL) {
@@ -36,8 +35,8 @@ void	parser(t_nm *nm, int ac, char **av) {
 		if ((fd = open(av[i], O_RDONLY)) == -1) {
 			tmp->error = ft_strjoin("ft_nm: '", av[i]);
 			tmp->error = ft_strjoin_free(tmp->error, "': No such file\n");
-		} else if (fstat(fd, &st) > -1) {
-			if (S_ISDIR(st.st_mode)) {
+		} else if (fstat(fd, &tmp->st) > -1) {
+			if (S_ISDIR(tmp->st.st_mode)) {
 				close(fd);
 				tmp->error = ft_strjoin("ft_nm: ", av[i]);
 				tmp->error = ft_strjoin_free(tmp->error, ": Is a directory\n");
@@ -53,6 +52,36 @@ void	parser(t_nm *nm, int ac, char **av) {
 	}
 }
 
+int elf32(t_file *file, char *data) {
+	(void)file;
+	(void)data;
+
+	printf("ELF32\n");
+	return 1;
+}
+
+int elf64(t_file *file, char *data) {
+	(void)file;
+	(void)data;
+
+	printf("ELF64\n");
+	return 1;
+}
+
+int		is_elf(t_file *file) {
+	char	*data;
+
+	if ((data = mmap(NULL, file->st.st_size, PROT_READ, MAP_PRIVATE, file->fd, 0)) == MAP_FAILED)
+		return (0);
+	if (data[0] == ELFMAG0 && data[1] == ELFMAG1 && data[2] == ELFMAG2 && data[3] == ELFMAG3) {
+		data[4] == ELFCLASS32 ? elf32(file, data) : elf64(file, data);
+		return (1);
+	}
+	if (munmap(data, file->st.st_size) < 0)
+        return fprintf(stderr, "ft_nm: Warning: '%s': Unable to unmap file\n", file->name);
+	return fprintf(stderr, "ft_nm: '%s': file format not recognized\n", file->name);
+}
+
 int		main(int ac, char **av) {
 	t_nm	nm;
 	t_list	*tmp;
@@ -65,9 +94,9 @@ int		main(int ac, char **av) {
 	tmp = nm.files;
 	while (tmp) {
 		if (((t_file *)tmp->content)->error) {
-			printf("%s", ((t_file *)tmp->content)->error);
+			fprintf(stderr, "%s", ((t_file *)tmp->content)->error);
 		} else {
-
+			is_elf(tmp->content);
 		}
 		tmp = tmp->next;
 	}

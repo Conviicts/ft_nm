@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <sys/mman.h>
+#include <elf.h>
 
 #include "libft.h"
 
@@ -15,6 +17,7 @@ typedef struct s_file {
     char    *name;
     char    *error;
     int     fd;
+    t_stat  st;
 }   t_file;
 
 typedef struct s_nm {
