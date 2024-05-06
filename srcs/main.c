@@ -36,8 +36,14 @@ void	parser(t_nm *nm, int ac, char **av) {
 		if ((fd = open(av[i], O_RDONLY)) == -1) {
 			tmp->error = ft_strjoin("ft_nm: '", av[i]);
 			tmp->error = ft_strjoin_free(tmp->error, "': No such file\n");
-		} else if (lstat(av[i], &st) == 0) {
-			tmp->fd = fd;
+		} else if (fstat(fd, &st) > -1) {
+			if (S_ISDIR(st.st_mode)) {
+				close(fd);
+				tmp->error = ft_strjoin("ft_nm: ", av[i]);
+				tmp->error = ft_strjoin_free(tmp->error, ": Is a directory\n");
+			} else {
+				tmp->fd = fd;
+			}
 		} else {
 			close(fd);
 			tmp->error = ft_strjoin("ft_nm: ", av[i]);
@@ -58,9 +64,10 @@ int		main(int ac, char **av) {
 
 	tmp = nm.files;
 	while (tmp) {
-		printf("[%s]\n", ((t_file *)tmp->content)->name);
 		if (((t_file *)tmp->content)->error) {
 			printf("%s", ((t_file *)tmp->content)->error);
+		} else {
+
 		}
 		tmp = tmp->next;
 	}
